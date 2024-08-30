@@ -425,14 +425,18 @@ class GraphQLEditor extends React.PureComponent<Props & ReduxProps> {
   private handleHintInformationRender = elem => {
     elem.addEventListener('click', this.onClickHintInformation)
 
-    let onRemoveFn
-    elem.addEventListener(
-      'DOMNodeRemoved',
-      (onRemoveFn = () => {
-        elem.removeEventListener('DOMNodeRemoved', onRemoveFn)
-        elem.removeEventListener('click', this.onClickHintInformation)
-      }),
-    )
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.removedNodes.forEach((removedNode) => {
+          if (removedNode === elem) {
+            elem.removeEventListener('click', this.onClickHintInformation);
+            observer.disconnect();
+          }
+        });
+      });
+    });
+
+    observer.observe(elem, { childList: true });
   }
 
   private handleResizeStart = downEvent => {
